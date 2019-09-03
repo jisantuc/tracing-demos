@@ -46,8 +46,7 @@ lazy val datamodelDependencies = commonDependencies ++ Seq(
 )
 lazy val datamodel = (project in file("datamodel"))
   .settings(datamodelSettings: _*)
-  .settings({libraryDependencies ++= datamodelDependencies
-  })
+  .settings({ libraryDependencies ++= datamodelDependencies })
 
 //////////////
 // Database //
@@ -72,7 +71,6 @@ lazy val database = (project in file("database"))
     libraryDependencies ++= databaseDependencies
   })
 
-
 ///////////////
 //    API    //
 ///////////////
@@ -95,7 +93,8 @@ lazy val apiDependencies = commonDependencies ++ databaseDependencies ++ Seq(
   Dependencies.http4s,
   Dependencies.http4sCirce,
   Dependencies.http4sDsl,
-  Dependencies.http4sServer
+  Dependencies.http4sServer,
+  Dependencies.natchez
 )
 
 lazy val api = (project in file("api"))
