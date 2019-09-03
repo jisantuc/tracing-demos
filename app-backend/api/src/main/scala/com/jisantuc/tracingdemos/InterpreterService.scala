@@ -22,18 +22,32 @@ class InterpreterService(implicit tracingContext: TracingContextBuilder[IO]) {
     .covary[IO] ++ allOpsForever
 
   def routes: HttpRoutes[IO] = TracedHttpRoutes[IO] {
-    case GET -> Root :? NOpsQueryParamMatcher(ops) :? SeedQueryParamMatcher(seed) using _ =>
+    case GET -> Root :? NOpsQueryParamMatcher(ops) :? SeedQueryParamMatcher(seed) using tracingContext =>
       for {
-        opConstructors <- allOpsForever.take(ops).compile.to[List]
-        op = opConstructors.foldRight(Lit(seed): Op)((f: Op => Op, x: Op) => f(x))
+        opConstructors <- tracingContext.childSpan("collect-ops", Map("nOps" -> s"$ops")) use { _ =>
+          allOpsForever.take(ops).compile.to[List]
+        }
+        op <- tracingContext.childSpan("build-op", Map("seed" -> s"$seed")) use { _ =>
+          IO {
+            opConstructors.foldRight(Lit(seed): Op)((f: Op => Op, x: Op) => f(x))
+          }
+        }
         result <- IO(Interpreter(op)).attempt
         resp <- result match {
           case Right(res) =>
-            Ok(
-              Map("result" -> res.asJson, "operations" -> op.asJson).asJson
-            )
+            tracingContext.childSpan("send-response",
+                                     Map("result" -> s"$result", "responseType" -> "success")) use {
+              _ =>
+                Ok(
+                  Map("result" -> res.asJson, "operations" -> op.asJson).asJson
+                )
+            }
           case Left(err) =>
-            BadRequest(Map("err" -> err.getMessage.asJson, "operations" -> op.asJson).asJson)
+            tracingContext.childSpan(
+              "send-response",
+              Map("result" -> err.getMessage, "responseType" -> "failure")) use { _ =>
+              BadRequest(Map("err" -> err.getMessage.asJson, "operations" -> op.asJson).asJson)
+            }
         }
       } yield resp
   }
