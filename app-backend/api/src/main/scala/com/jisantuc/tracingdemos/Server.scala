@@ -10,10 +10,12 @@ import org.http4s.server.Router
 
 object ApiServer extends IOApp {
 
+  implicit val tracingContext = Tracing.tracingContextBuilder
+
   val httpApp: HttpApp[IO] = CORS(
     Router(
       "/api/hello"       -> HelloService.routes,
-      "/api/interpreter" -> new InterpreterService().routes
+      "/api/interpreter" -> (new InterpreterService).routes
     )).orNotFound
 
   def run(args: List[String]): IO[ExitCode] =

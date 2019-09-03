@@ -3,12 +3,15 @@ package com.jisantuc.tracingdemos.api
 import com.jisantuc.tracingdemos.datamodel._
 
 import cats.effect._
+import com.colisweb.tracing.http4s.TracedHttpRoutes
+import com.colisweb.tracing.http4s.TracedHttpRoutes._
+import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
 
-class InterpreterService() {
+class InterpreterService(implicit tracingContext: TracingContextBuilder[IO]) {
   object NOpsQueryParamMatcher extends QueryParamDecoderMatcher[Int]("ops")
   object SeedQueryParamMatcher extends QueryParamDecoderMatcher[Int]("seed")
 
@@ -18,8 +21,8 @@ class InterpreterService() {
     .emits(Op.shuffledOpsConstructors)
     .covary[IO] ++ allOpsForever
 
-  val routes: HttpRoutes[IO] = HttpRoutes.of {
-    case GET -> Root :? NOpsQueryParamMatcher(ops) :? SeedQueryParamMatcher(seed) =>
+  def routes: HttpRoutes[IO] = TracedHttpRoutes[IO] {
+    case GET -> Root :? NOpsQueryParamMatcher(ops) :? SeedQueryParamMatcher(seed) using _ =>
       for {
         opConstructors <- allOpsForever.take(ops).compile.to[List]
         op = opConstructors.foldRight(Lit(seed): Op)((f: Op => Op, x: Op) => f(x))

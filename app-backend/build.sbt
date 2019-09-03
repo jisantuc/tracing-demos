@@ -22,7 +22,8 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("org.spire-math"  %% "kind-projector"     % "0.9.6"),
   addCompilerPlugin("com.olegpy"      %% "better-monadic-for" % "0.2.4"),
   addCompilerPlugin("org.scalamacros" % "paradise"            % "2.1.0" cross CrossVersion.full),
-  addCompilerPlugin(scalafixSemanticdb)
+  addCompilerPlugin(scalafixSemanticdb),
+  resolvers += Resolver.bintrayRepo("colisweb", "maven")
 )
 
 lazy val root = (project in file("."))
@@ -46,8 +47,7 @@ lazy val datamodelDependencies = commonDependencies ++ Seq(
 )
 lazy val datamodel = (project in file("datamodel"))
   .settings(datamodelSettings: _*)
-  .settings({libraryDependencies ++= datamodelDependencies
-  })
+  .settings({ libraryDependencies ++= datamodelDependencies })
 
 //////////////
 // Database //
@@ -72,7 +72,6 @@ lazy val database = (project in file("database"))
     libraryDependencies ++= databaseDependencies
   })
 
-
 ///////////////
 //    API    //
 ///////////////
@@ -95,7 +94,8 @@ lazy val apiDependencies = commonDependencies ++ databaseDependencies ++ Seq(
   Dependencies.http4s,
   Dependencies.http4sCirce,
   Dependencies.http4sDsl,
-  Dependencies.http4sServer
+  Dependencies.http4sServer,
+  Dependencies.opentracing
 )
 
 lazy val api = (project in file("api"))
