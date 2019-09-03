@@ -6,9 +6,9 @@ import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 
-object HelloService extends Http4sDsl[IO] {
+class HelloService[F[_]: Sync] extends Http4sDsl[F] {
 
-  val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+  val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root / name => {
       Ok(Json.obj("message" -> Json.fromString(s"Hello, ${name}")))
     }
