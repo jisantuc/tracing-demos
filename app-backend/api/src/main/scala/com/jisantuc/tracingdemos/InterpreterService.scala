@@ -1,10 +1,9 @@
 package com.jisantuc.tracingdemos.api
 
 import com.jisantuc.tracingdemos.datamodel._
+import ALBTracedHttpRoutes._
 
 import cats.effect._
-import com.colisweb.tracing.http4s.TracedHttpRoutes
-import com.colisweb.tracing.http4s.TracedHttpRoutes._
 import com.colisweb.tracing.TracingContext.TracingContextBuilder
 import io.circe.syntax._
 import org.http4s._
@@ -21,7 +20,7 @@ class InterpreterService(implicit tracingContext: TracingContextBuilder[IO]) {
     .emits(Op.shuffledOpsConstructors)
     .covary[IO] ++ allOpsForever
 
-  def routes: HttpRoutes[IO] = TracedHttpRoutes[IO] {
+  def routes: HttpRoutes[IO] = ALBTracedHttpRoutes[IO] {
     case GET -> Root :? NOpsQueryParamMatcher(ops) :? SeedQueryParamMatcher(seed) using tracingContext =>
       for {
         opConstructors <- tracingContext.childSpan("collect-ops", Map("nOps" -> s"$ops")) use { _ =>
