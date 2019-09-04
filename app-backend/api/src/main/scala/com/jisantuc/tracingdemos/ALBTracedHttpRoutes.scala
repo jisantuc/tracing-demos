@@ -37,19 +37,19 @@ object ALBTracedHttpRoutes {
       val tags = Map(
         HTTP_METHOD.getKey -> req.method.name,
         HTTP_URL.getKey    -> req.uri.path.toString,
-        "TraceId"          -> traceHeader
+        "X-Amzn-Trace-Id"  -> traceHeader
       )
 
       OptionT {
         builder(operationName, tags) use { context =>
           val tracedRequest = TracedRequest[F](req, context)
           val responseOptionWithTags = routes.run(tracedRequest) semiflatMap { response =>
-            val tags = Map(
+            val traceTags = Map(
               HTTP_STATUS.getKey() -> response.status.code.toString
-            ) ++
+            ) ++ tags ++
               response.headers.toList.map(h => (s"http.response.header.${h.name}" -> h.value)).toMap
             context
-              .addTags(tags)
+              .addTags(traceTags)
               .map(_ => response)
           }
           responseOptionWithTags.value
