@@ -95,7 +95,8 @@ lazy val apiDependencies = commonDependencies ++ databaseDependencies ++ Seq(
   Dependencies.http4sCirce,
   Dependencies.http4sDsl,
   Dependencies.http4sServer,
-  Dependencies.opentracing
+  Dependencies.opentracing,
+  Dependencies.jaegerClient
 )
 
 lazy val api = (project in file("api"))
